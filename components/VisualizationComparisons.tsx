@@ -3,11 +3,32 @@ import { VIS_CONFIG } from '../constants';
 
 // Helper function to get image URL with proper base path
 const getImageUrl = (slide: string, gene: string, suffix: string): string => {
-  const baseUrl = import.meta.env.BASE_URL || '/';
-  // Ensure base URL is properly formatted
-  const normalizedBase = baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`;
-  // Remove leading slash from demo to avoid double slashes
-  return `${normalizedBase}demo/${slide}_${gene}_${suffix}.png`;
+  // Get base URL from Vite environment
+  let baseUrl = import.meta.env.BASE_URL;
+  
+  // Fallback to '/' if BASE_URL is not set
+  if (!baseUrl) {
+    baseUrl = '/';
+  }
+  
+  // Ensure base URL starts with '/' and ends with '/'
+  if (!baseUrl.startsWith('/')) {
+    baseUrl = '/' + baseUrl;
+  }
+  if (!baseUrl.endsWith('/')) {
+    baseUrl = baseUrl + '/';
+  }
+  
+  // Construct the full path: baseUrl + demo/ + filename
+  // In Vite, public folder contents are served from root, so we use 'demo/' not '/demo/'
+  const imagePath = `${baseUrl}demo/${slide}_${gene}_${suffix}.png`;
+  
+  // Debug log (only in development)
+  if (import.meta.env.DEV) {
+    console.log('Image URL:', imagePath, 'BASE_URL:', import.meta.env.BASE_URL);
+  }
+  
+  return imagePath;
 };
 
 // Sub-component to handle individual image loading
