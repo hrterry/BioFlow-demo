@@ -65,7 +65,14 @@ const VisualizationComparisons: React.FC = () => {
   // Generates the base filename (without extension)
   // Using import.meta.env.BASE_URL to support GitHub Pages deployment
   const getImageBasePath = (suffix: string) => {
-    const baseUrl = import.meta.env.BASE_URL || '/';
+    // Ensure base URL starts with / and ends with /
+    let baseUrl = import.meta.env.BASE_URL || '/';
+    if (!baseUrl.startsWith('/')) {
+      baseUrl = '/' + baseUrl;
+    }
+    if (!baseUrl.endsWith('/')) {
+      baseUrl = baseUrl + '/';
+    }
     return `${baseUrl}demo/${activeSlide}_${activeGene}_${suffix}`;
   };
 

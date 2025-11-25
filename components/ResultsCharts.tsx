@@ -28,8 +28,8 @@ const ResultsCharts: React.FC = () => {
           <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
             <h3 className="text-xl font-bold text-slate-800 mb-2">Accuracy vs. Efficiency</h3>
             <p className="text-sm text-slate-500 mb-6">Trade-off between predictive accuracy (PCC) and computational cost. Top-left is better.</p>
-            <div className="h-80 w-full">
-              <ResponsiveContainer width="100%" height="100%">
+            <div className="h-80 w-full min-h-[320px]">
+              <ResponsiveContainer width="100%" height="100%" minHeight={320}>
                 <ScatterChart
                   margin={{ top: 20, right: 20, bottom: 20, left: 20 }}
                 >
@@ -80,8 +80,8 @@ const ResultsCharts: React.FC = () => {
           <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
             <h3 className="text-xl font-bold text-slate-800 mb-2">Biological Validity Violation</h3>
             <p className="text-sm text-slate-500 mb-6">Percentage of generated values that are negative (biologically impossible).</p>
-            <div className="h-80 w-full">
-              <ResponsiveContainer width="100%" height="100%">
+            <div className="h-80 w-full min-h-[320px]">
+              <ResponsiveContainer width="100%" height="100%" minHeight={320}>
                 <BarChart
                   data={NEGATIVE_VALUES_DATA}
                   layout="vertical"
