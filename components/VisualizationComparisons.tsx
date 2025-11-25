@@ -1,31 +1,40 @@
 import React, { useState, useEffect } from 'react';
 import { VIS_CONFIG } from '../constants';
 
-// Sub-component to handle individual image loading states with auto-retry for extensions
-const MethodImage = ({ basePath, alt, role }: { basePath: string; alt: string; role: string }) => {
-  const [error, setError] = useState(false);
-  const [tryIndex, setTryIndex] = useState(0);
-  
-  // Supported extensions to try in order
-  const EXTENSIONS = ['.png', '.PNG', '.jpg', '.jpeg'];
+// Helper function to get image URL with proper base path
+const getImageUrl = (slide: string, gene: string, suffix: string): string => {
+  const baseUrl = import.meta.env.BASE_URL || '/';
+  // Ensure base URL is properly formatted
+  const normalizedBase = baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`;
+  // Remove leading slash from demo to avoid double slashes
+  return `${normalizedBase}demo/${slide}_${gene}_${suffix}.png`;
+};
 
-  // Reset state when the base path changes (i.e. different slide/gene selected)
+// Sub-component to handle individual image loading
+const MethodImage = ({ 
+  imageUrl, 
+  alt, 
+  role 
+}: { 
+  imageUrl: string; 
+  alt: string; 
+  role: string;
+}) => {
+  const [error, setError] = useState(false);
+  const [loading, setLoading] = useState(true);
+
   useEffect(() => {
     setError(false);
-    setTryIndex(0);
-  }, [basePath]);
-
-  const currentSrc = `${basePath}${EXTENSIONS[tryIndex]}`;
+    setLoading(true);
+  }, [imageUrl]);
 
   const handleError = () => {
-    const nextIndex = tryIndex + 1;
-    if (nextIndex < EXTENSIONS.length) {
-      // Try next extension
-      setTryIndex(nextIndex);
-    } else {
-      // All extensions failed
-      setError(true);
-    }
+    setError(true);
+    setLoading(false);
+  };
+
+  const handleLoad = () => {
+    setLoading(false);
   };
 
   if (error) {
@@ -35,46 +44,32 @@ const MethodImage = ({ basePath, alt, role }: { basePath: string; alt: string; r
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
         </svg>
         <span className="font-bold text-slate-700 mb-1">Image Not Found</span>
-        <div className="flex flex-col gap-1 mt-1 w-full">
-          <span className="text-[10px] text-slate-400">Tried:</span>
-          {EXTENSIONS.map(ext => (
-            <span key={ext} className="font-mono text-[9px] bg-white p-0.5 rounded border border-slate-100 truncate text-left">
-              ...{basePath.split('/').pop()}{ext}
-            </span>
-          ))}
-        </div>
+        <span className="text-[10px] text-slate-400 font-mono mt-1 break-all">{imageUrl}</span>
       </div>
     );
   }
 
   return (
-    <img
-      src={currentSrc}
-      alt={alt}
-      className="w-full h-full object-contain"
-      onError={handleError}
-    />
+    <div className="relative w-full h-full">
+      {loading && (
+        <div className="absolute inset-0 flex items-center justify-center bg-slate-100">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        </div>
+      )}
+      <img
+        src={imageUrl}
+        alt={alt}
+        className={`w-full h-full object-contain ${loading ? 'opacity-0' : 'opacity-100'} transition-opacity duration-300`}
+        onError={handleError}
+        onLoad={handleLoad}
+      />
+    </div>
   );
 };
 
 const VisualizationComparisons: React.FC = () => {
-  // Initialize with the first available slide/gene from constants
   const [activeSlide, setActiveSlide] = useState(VIS_CONFIG.slides[0]?.id || 'MEND157');
   const [activeGene, setActiveGene] = useState(VIS_CONFIG.genes[0]?.id || 'PLA2G2A');
-
-  // Generates the base filename (without extension)
-  // Using import.meta.env.BASE_URL to support GitHub Pages deployment
-  const getImageBasePath = (suffix: string) => {
-    // Ensure base URL starts with / and ends with /
-    let baseUrl = import.meta.env.BASE_URL || '/';
-    if (!baseUrl.startsWith('/')) {
-      baseUrl = '/' + baseUrl;
-    }
-    if (!baseUrl.endsWith('/')) {
-      baseUrl = baseUrl + '/';
-    }
-    return `${baseUrl}demo/${activeSlide}_${activeGene}_${suffix}`;
-  };
 
   return (
     <section id="visualization" className="py-20 bg-white">
@@ -141,7 +136,9 @@ const VisualizationComparisons: React.FC = () => {
                   >
                     <span>{gene.label}</span>
                     {activeGene === gene.id && (
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
                     )}
                   </button>
                 ))}
@@ -155,8 +152,7 @@ const VisualizationComparisons: React.FC = () => {
           {VIS_CONFIG.methods.map((method) => {
             const isOurs = method.role === 'ours';
             const isRef = method.role === 'reference';
-            const suffix = method.filename_suffix;
-            const basePath = getImageBasePath(suffix);
+            const imageUrl = getImageUrl(activeSlide, activeGene, method.filename_suffix);
             
             const cardClasses = `group relative flex flex-col rounded-xl overflow-hidden border-2 bg-white ${
               isOurs 
@@ -184,12 +180,11 @@ const VisualizationComparisons: React.FC = () => {
 
                 {/* Visualization Image */}
                 <div className="aspect-square relative bg-slate-100">
-                  {/* Using key={basePath} ensures the component resets state when the slide changes */}
                   <MethodImage 
-                    basePath={basePath} 
+                    imageUrl={imageUrl}
                     alt={`${method.label} result`}
                     role={method.role}
-                    key={basePath} 
+                    key={`${activeSlide}-${activeGene}-${method.id}`}
                   />
                   
                   {/* Hover Overlay for Context */}
@@ -211,12 +206,6 @@ const VisualizationComparisons: React.FC = () => {
               </div>
             );
           })}
-        </div>
-
-        <div className="mt-8 text-center text-slate-400 text-sm italic">
-          <p>
-            Loading images from: <span className="font-mono bg-slate-100 px-1 py-0.5 rounded mx-1 text-slate-600">{import.meta.env.BASE_URL || '/'}demo/</span> folder.
-          </p>
         </div>
 
       </div>
