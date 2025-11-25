@@ -63,9 +63,10 @@ const VisualizationComparisons: React.FC = () => {
   const [activeGene, setActiveGene] = useState(VIS_CONFIG.genes[0]?.id || 'PLA2G2A');
 
   // Generates the base filename (without extension)
-  // Using absolute path '/demo/' for Vite static assets in public directory
+  // Using import.meta.env.BASE_URL to support GitHub Pages deployment
   const getImageBasePath = (suffix: string) => {
-    return `/demo/${activeSlide}_${activeGene}_${suffix}`;
+    const baseUrl = import.meta.env.BASE_URL || '/';
+    return `${baseUrl}demo/${activeSlide}_${activeGene}_${suffix}`;
   };
 
   return (
@@ -207,7 +208,7 @@ const VisualizationComparisons: React.FC = () => {
 
         <div className="mt-8 text-center text-slate-400 text-sm italic">
           <p>
-            Loading images from: <span className="font-mono bg-slate-100 px-1 py-0.5 rounded mx-1 text-slate-600">/demo/</span> folder.
+            Loading images from: <span className="font-mono bg-slate-100 px-1 py-0.5 rounded mx-1 text-slate-600">{import.meta.env.BASE_URL || '/'}demo/</span> folder.
           </p>
         </div>
 
